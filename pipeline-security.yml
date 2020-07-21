@@ -1,0 +1,52 @@
+input {
+  udp {
+    host => "10.100.0.2"
+    port => 10514
+    codec => "json"
+    type => "rsyslog"
+    tags => ["rsyslog"]
+  }
+}
+
+filter {
+  #Fail2Ban Ban Message
+  grok {
+    match => { "message" => "%{TIMESTAMP_ISO8601} fail2ban.actions\s+\[%{INT:fail2ban_digit}\]: %{LOGLEVEL:loglevel} *\[%{NOTSPACE:jail}\] %{GREEDYDATA:banstatus} %{IP:clientip}"}
+    add_tag => ["f2b-ban","grokked","securityevent"]
+  }
+
+  #Fail2Ban Filter Message
+  grok {
+    match => { "message" => "%{TIMESTAMP_ISO8601} fail2ban.filter\s+\[%{INT:fail2ban_digit}\]: %{LOGLEVEL:loglevel} *\[%{NOTSPACE:jail}\] %{GREEDYDATA:banstatus} %{IP:clientip}"}
+    add_tag => ["f2b-filter","grokked","securityevent"]
+  }
+
+  #Apache Logs
+  grok {
+    match => { "message" => "%{CUSTOMAPACHELOG}"}
+    add_tag => ["apache","grokked","securityevent"]
+  }
+
+  #SSH Invalid User
+  grok {
+    match => { "message" => "Invalid user %{USERNAME:invalid_username} from %{IPV4:clientip} port %{POSINT:client_port}"}
+    add_tag => ["ssh_failed_login", "grokked","securityevent"]
+  }
+
+
+
+  geoip {
+    source => "clientip"
+  }
+
+}
+
+output {
+  if "securityevent" in [tags] {
+
+    elasticsearch {
+      hosts => ["127.0.0.1:9200"]
+      index => "logstash-security"
+    }
+  }
+}
