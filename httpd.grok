@@ -1,0 +1,20 @@
+#In logstash/vendor/bundle/jruby/x.x.x/gems/logstash-patterns-core-4.1.2/patterns
+HTTPDUSER %{EMAILADDRESS}|%{USER}
+HTTPDERROR_DATE %{DAY} %{MONTH} %{MONTHDAY} %{TIME} %{YEAR}
+
+# Log formats
+HTTPD_COMMONLOG %{IPORHOST:clientip} %{HTTPDUSER:ident} %{HTTPDUSER:auth} \[%{HTTPDATE:timestamp}\] "(?:%{WORD:verb} %{NOTSPACE:request}(?: HTTP/%{NUMBER:httpversion})?|%{DATA:rawreques>
+HTTPD_COMBINEDLOG %{HTTPD_COMMONLOG} %{QS:referrer} %{QS:agent}
+
+# Error logs
+HTTPD20_ERRORLOG \[%{HTTPDERROR_DATE:timestamp}\] \[%{LOGLEVEL:loglevel}\] (?:\[client %{IPORHOST:clientip}\] ){0,1}%{GREEDYDATA:message}
+HTTPD24_ERRORLOG \[%{HTTPDERROR_DATE:timestamp}\] \[%{WORD:module}:%{LOGLEVEL:loglevel}\] \[pid %{POSINT:pid}(:tid %{NUMBER:tid})?\]( \(%{POSINT:proxy_errorcode}\)%{DATA:proxy_message}:>
+HTTPD_ERRORLOG %{HTTPD20_ERRORLOG}|%{HTTPD24_ERRORLOG}
+
+# Deprecated
+COMMONAPACHELOG %{HTTPD_COMMONLOG}
+COMBINEDAPACHELOG %{HTTPD_COMBINEDLOG}
+CUSTOMAPACHELOG %{HTTPD_COMBINEDLOG} %{GREEDYDATA:vhost} 
+#Custom apache log adds virtualhost to grok pattern
+#In apache config use
+#LogFormat "%h %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\" %v" combined_with_vhost
