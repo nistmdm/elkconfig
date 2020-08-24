@@ -8,7 +8,7 @@ input {
   }
 }
 
-filter {
+filter { 
   #Fail2Ban Ban Message
   grok {
     match => { "message" => "%{TIMESTAMP_ISO8601} fail2ban.actions\s+\[%{INT:fail2ban_digit}\]: %{LOGLEVEL:loglevel} *\[%{NOTSPACE:jail}\] %{GREEDYDATA:banstatus} %{IP:clientip}"}
@@ -43,9 +43,12 @@ filter {
 
 output {
   if "securityevent" in [tags] {
-
+    
     elasticsearch {
-      hosts => ["127.0.0.1:9200"]
+      hosts => ["https://10.100.0.2:9200"]
+      ssl_certificate_verification => false
+      user => "logstash_internal"
+      password => ""
       index => "logstash-security"
     }
   }
